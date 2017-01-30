@@ -4,12 +4,20 @@
 #include "ThreadManager.h"
 #include "ThreadException.h"
 
-ThreadManager::ThreadManager() : threadHandle(0) {}
-
-pthread_t ThreadManager::createJoinableThread(void* (*func)(void* para), void* para)
+/*
+ * Description: Create a joinable thread
+ * Arguments:
+ * 	std::string funcName		The name of the function will be called in the new thread
+ * 	void* (*func)(void* para)	The address of the function will be called in the new thread
+ * 	void* para					The address of the parameter will be passed to the function
+ * Return value:
+ * 	pthread_t	The created pthread_t structure
+ * 	
+ * */
+pthread_t ThreadManager::createJoinableThread(std::string funcName, void* (*func)(void* para), void* para)
 {
 	int ret = 0;
-	pthread_t thread[5];
+	pthread_t threadHandle;
     pthread_attr_t attr;    /* Create thread attributes */
     /* Extra set beginning as not every implementation does this */
     /* Initialise and set thread detached attribute */
