@@ -20,7 +20,9 @@
 class EpollTask : public TaskManager
 {
 	public:
-		EpollTask();
-		static void* initialEpoll(void*);
+	EpollTask();
+
+	private:
+	static void* initialEpoll(void*);
 };
 #endif
