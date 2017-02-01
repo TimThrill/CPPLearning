@@ -25,21 +25,19 @@ void* SelectTask::initialSelect(void* para)
 	socklen_t size;
 	struct sockaddr* clientName;
 
-	/* Initialise the set of active sockets. */
-	FD_ZERO(&active_fd_set);
-	FD_SET(listenSocket, &active_fd_set);
-
-	listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	
+	listenSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if(listenSocket == -1)
 	{
 			std::cout<<"Error: create socket failed"<<std::endl;
 	}
+	std::cout<<"Server listen at socket: "<<listenSocket<<std::endl;
 
 	struct sockaddr_in serverAddress;
 	memset(&serverAddress, 0x00, sizeof(struct sockaddr_in));
-	serverAddress.sin_family = AF_UNIX;	/* Set protocol */
+	serverAddress.sin_family = AF_INET;	/* Set protocol */
+	serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 	serverAddress.sin_port = htons(8888);	/* Set server port number */
-	memset(serverAddress.sin_zero, 0x00, sizeof(serverAddress.sin_zero));
 
 	/* Bind server socket */
 	if(bind(listenSocket, (struct sockaddr*)&serverAddress, sizeof(struct sockaddr)) == -1)
@@ -53,6 +51,10 @@ void* SelectTask::initialSelect(void* para)
 		std::cout<<"Error: Listen error!"<<std::endl;
 	}
 
+	/* Initialise the set of active sockets. */
+	FD_ZERO(&active_fd_set);
+	FD_SET(listenSocket, &active_fd_set);
+
 	const int FD_SET_SIZE = listenSocket + 1;
 
 	/* Loop for select */
@@ -60,11 +62,14 @@ void* SelectTask::initialSelect(void* para)
 	{
 		/* Block until readable data arrives on one or more sockets. */
 		read_fd_set = active_fd_set;
+		
+		std::cout<<"Select start"<<std::endl;
 		if(select(FD_SET_SIZE, &read_fd_set, NULL, NULL, NULL) < 0)
 		{
 			printf("Error: select error\n");
 			pthread_exit(NULL);
 		}
+		std::cout<<"select end, FD_SET_SIZE: "<<FD_SET_SIZE<<std::endl;
 
 		/* Process all sockets with input data */
 		for(int i = 0; i < FD_SET_SIZE; i++)
@@ -88,6 +93,10 @@ void* SelectTask::initialSelect(void* para)
 					/* Data arriving on a connected socket */
 					printf("Data arriving on a connected socket\n");
 				}
+			}
+			else
+			{
+				std::cout<<"FD: "<<i<<" No readable data"<<std::endl;
 			}
 		}
 	}
