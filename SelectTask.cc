@@ -5,6 +5,8 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <string.h>
+#include <iostream>
 
 #include "SelectTask.h"
 #include "ThreadManager.h"
@@ -17,16 +19,41 @@ SelectTask::SelectTask()
 
 void* SelectTask::initialSelect(void* para)
 {
-	int socket;
+	int listenSocket;
+	int svrPort;	/* Server side port number */
 	fd_set active_fd_set, read_fd_set;
 	socklen_t size;
 	struct sockaddr* clientName;
 
 	/* Initialise the set of active sockets. */
 	FD_ZERO(&active_fd_set);
-	FD_SET(socket, &active_fd_set);
+	FD_SET(listenSocket, &active_fd_set);
 
-	const int FD_SET_SIZE = socket + 1;
+	listenSocket = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+	if(listenSocket == -1)
+	{
+			std::cout<<"Error: create socket failed"<<std::endl;
+	}
+
+	struct sockaddr_in serverAddress;
+	memset(&serverAddress, 0x00, sizeof(struct sockaddr_in));
+	serverAddress.sin_family = AF_UNIX;	/* Set protocol */
+	serverAddress.sin_port = htons(8888);	/* Set server port number */
+	memset(serverAddress.sin_zero, 0x00, sizeof(serverAddress.sin_zero));
+
+	/* Bind server socket */
+	if(bind(listenSocket, (struct sockaddr*)&serverAddress, sizeof(struct sockaddr)) == -1)
+	{
+		std::cout<<"Error: Server bind error!"<<std::endl;
+	}
+
+	/* Listen server socket */
+	if(listen(listenSocket, 5) == -1)
+	{
+		std::cout<<"Error: Listen error!"<<std::endl;
+	}
+
+	const int FD_SET_SIZE = listenSocket + 1;
 
 	/* Loop for select */
 	while(1)
@@ -44,10 +71,10 @@ void* SelectTask::initialSelect(void* para)
 		{
 			if(FD_ISSET(i, &read_fd_set))	/* Exist data */
 			{
-				if(i == socket)	/* Connection request on original socket. */
+				if(i == listenSocket)	/* Connection request on original socket. */
 				{
 					size = sizeof(struct sockaddr);
-					int readSocket = accept(socket, (struct sockaddr*)&clientName, &size);
+					int readSocket = accept(listenSocket, (struct sockaddr*)&clientName, &size);
 					if(readSocket < 0)
 					{
 						printf("Error: accept error\n");
