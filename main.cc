@@ -6,6 +6,7 @@
 
 #include "thread_func.h"
 #include "EpollTask.h"
+#include "SelectTask.h"
 
 int main(int argc, char** argv)
 {
@@ -54,6 +55,7 @@ int main(int argc, char** argv)
 	pthread_exit(NULL);
 #endif
 
-	EpollTask epollTask;
+	// EpollTask epollTask;
+	SelectTask select;
 	return 0;
 }

@@ -53,9 +53,10 @@ void* SelectTask::initialSelect(void* para)
 
 	/* Initialise the set of active sockets. */
 	FD_ZERO(&active_fd_set);
+	/* Add listen socket to active_fd_set */
 	FD_SET(listenSocket, &active_fd_set);
 
-	const int FD_SET_SIZE = listenSocket + 1;
+	int FD_SET_SIZE = listenSocket + 1;
 
 	/* Loop for select */
 	while(1)
@@ -85,13 +86,17 @@ void* SelectTask::initialSelect(void* para)
 						printf("Error: accept error\n");
 						pthread_exit(NULL);
 					}
-					printf("Server connect!\n");
-					FD_SET(readSocket, &active_fd_set);
+					std::cout<<"Server connect! Create read socket: "<<readSocket<<std::endl;
+					FD_SET(readSocket, &active_fd_set);	/* update fd set */
+					FD_SET_SIZE = readSocket + 1;
 				}
 				else
 				{
 					/* Data arriving on a connected socket */
-					printf("Data arriving on a connected socket\n");
+					std::cout<<"Data arriving on a connected socket, socket number: "<<i<<std::endl;
+					char str[10] = {0};
+					int ret = read(i, str, 512);
+					std::cout<<"Read "<<ret<<" bytes. Content: "<<str<<std::endl;
 				}
 			}
 			else
